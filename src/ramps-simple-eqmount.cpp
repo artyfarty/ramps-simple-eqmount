@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 // For RAMPS 1.4
 #define X_STEP_PIN 54
 #define X_DIR_PIN 55
@@ -45,7 +47,6 @@
 #define TEMP_0_PIN 13  // ANALOG NUMBERING
 #define TEMP_1_PIN 14  // ANALOG NUMBERING
 
-#include <Arduino.h>
 #include <U8g2lib.h>
 
 //
