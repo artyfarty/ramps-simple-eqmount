@@ -2,7 +2,7 @@
 #include "pins.h"
 
 #include <U8g2lib.h>
-U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R0, DOGLCD_SCK, DOGLCD_MOSI, DOGLCD_CS);
+U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R3, DOGLCD_SCK, DOGLCD_MOSI, DOGLCD_CS);
 
 #include <GyverStepper2.h>
 GStepper2<STEPPER2WIRE> e0_stepper(200*16, E0_STEP_PIN, E0_DIR_PIN, E0_ENABLE_PIN);
@@ -77,7 +77,7 @@ void loop() {
       u8g2.clearBuffer();
       u8g2.setFont(u8g2_font_ncenB14_tr);
       u8g2.setCursor(0, 15);
-      u8g2.print("Speed = ");
+      //u8g2.print("Speed");
       u8g2.print(e0_speed);
       u8g2.sendBuffer();
     } while (u8g2.nextPage());
