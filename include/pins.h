@@ -1,3 +1,5 @@
+#ifdef PINOUT_RAMPS
+
 #include "pins_ramps.h"
 #include "pins_ramps_lcd.h"
 
@@ -13,3 +15,5 @@
 #define LCD_DATA_PIN            DOGLCD_MOSI
 #define LCD_CS_PIN              DOGLCD_CS
 #define LCD_RST_PIN             U8X8_PIN_NONE
+
+#endif

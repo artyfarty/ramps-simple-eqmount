@@ -1,0 +1,8 @@
+#ifdef PINOUT_RAMPS
+
+#define RA_ENCODER_MODE         INPUT_PULLUP
+#define RA_ENCODER_TYPE         EB_STEP4_HIGH
+#define RA_ENCODER_BTN_MODE     INPUT_PULLUP
+#define RA_ENCODER_BTN_LEVEL    LOW
+
+#endif
