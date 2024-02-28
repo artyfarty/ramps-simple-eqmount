@@ -32,6 +32,10 @@ GStepper2<STEPPER2WIRE> ra_stepper(200*16, RA_STEPPER_STEP_PIN, RA_STEPPER_DIR_P
 #include <EncButton.h>
 EncButtonT<RA_ENCODER_PIN1_PIN, RA_ENCODER_PIN2_PIN, RA_ENCODER_BTN_PIN> main_encoder(RA_ENCODER_MODE, RA_ENCODER_BTN_MODE, RA_ENCODER_BTN_LEVEL);
 
+#ifdef USE_REMOTE
+EncButtonT<RMT_ENCODER_PIN1_PIN, RMT_ENCODER_PIN2_PIN, RMT_ENCODER_BTN_PIN> rmt_encoder(RMT_ENCODER_MODE, RMT_ENCODER_BTN_MODE, RMT_ENCODER_BTN_LEVEL);
+#endif
+
 #define SIDEREAL_SPEED 8.54218107
 
 float ra_speed = SIDEREAL_SPEED;
@@ -53,18 +57,22 @@ void shuttle(int32_t multipler, int8_t dir) {
 
   update_indicators = true;
 
-  ra_stepper.setTarget(ra_speed * dir * multipler, RELATIVE);
-  //setPeriod(ra_stepper.getPeriod());
+  ra_stepper.setTarget(ra_stepper.getTarget() + (ra_speed * dir * multipler));
+  setPeriod(ra_stepper.getPeriod());
 }
 
 void setup() {
   initTimer();
   ra_stepper.setAcceleration(600);
-  ra_stepper.setMaxSpeed(1000);
+  ra_stepper.setMaxSpeed(16000);
 
   setSpeed(SIDEREAL_SPEED);
 
   main_encoder.setEncType(RA_ENCODER_TYPE);
+
+  #ifdef USE_REMOTE
+    rmt_encoder.setEncType(RMT_ENCODER_TYPE);
+  #endif 
 
   #ifdef USE_LCD
     u8g2.begin();
@@ -104,6 +112,25 @@ void loop() {
     }
   }
 
+  #ifdef USE_REMOTE
+    rmt_encoder.tick();
+    if (rmt_encoder.turn()) {
+      if (rmt_encoder.pressing()) {
+        switch (rmt_encoder.getClicks()) {
+          case 0:
+            shuttle(50, rmt_encoder.dir());
+            break;
+          case 1: 
+            shuttle(100, rmt_encoder.dir());
+            break;
+        }
+
+      } else {
+        shuttle(10, rmt_encoder.dir());
+      }
+    }
+  #endif
+
 
   if (ra_stepper.ready()) {
     #ifdef USE_LCD
@@ -135,7 +162,7 @@ void loop() {
         }
         if (lcd_indicator_icon != 0) {
           u8g2.setFont(u8g2_font_9x15_t_symbols);
-          u8g2.drawGlyph(0, 60, lcd_indicator_icon); 
+          u8g2.drawGlyph(110, 60, lcd_indicator_icon); 
         }
 
         u8g2.setFont(u8g2_font_ncenB14_tr);
@@ -146,9 +173,23 @@ void loop() {
         u8g2.print("spd: ");
         u8g2.print(ra_speed);
         u8g2.print("st/s");
+
         u8g2.setCursor(0, 45);
         u8g2.print("pos: ");
-        u8g2.print(ra_stepper.pos);
+        u8g2.print(ra_stepper.getCurrent());
+        if (ra_stepper.getStatus() == 1) {
+          u8g2.print(" > ");
+          u8g2.print(ra_stepper.getTarget());
+        }
+        
+        u8g2.setCursor(0, 60);
+        u8g2.print("enc: ");
+        u8g2.print(main_encoder.counter);
+
+        #ifdef USE_REMOTE
+          u8g2.print(" rmt: ");
+          u8g2.print(rmt_encoder.counter);
+        #endif
 
         u8g2.sendBuffer();
       } while (u8g2.nextPage());

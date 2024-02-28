@@ -45,6 +45,31 @@
 #define TEMP_0_PIN 13  // ANALOG NUMBERING
 #define TEMP_1_PIN 14  // ANALOG NUMBERING
 
+//
+// AUX1    5V  GND D2  D1
+//          2   4   6   8
+//          1   3   5   7
+//         5V  GND A3  A4
+//
+#define AUX1_05                               57  // (A3)
+#define AUX1_06                                2
+#define AUX1_07                               58  // (A4)
+#define AUX1_08                                1
+
+//
+// AUX2    GND A9 D40 D42 A11
+//          2   4   6   8  10
+//          1   3   5   7   9
+//         VCC A5 A10 D44 A12
+//
+#define AUX2_03                               59  // (A5)
+#define AUX2_04                               63  // (A9)
+#define AUX2_05                               64  // (A10)
+#define AUX2_06                               40
+#define AUX2_07                               44
+#define AUX2_08                               42
+#define AUX2_09                               66  // (A12)
+#define AUX2_10                               65  // (A11)
 
 
 //
