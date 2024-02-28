@@ -61,6 +61,9 @@ I created this for myself and i am using it. Current revision is "good enough" f
 Position adjustment via encoders is clunky, if you know how to make the input more responsive and connected to encoder movement, feel free to submit PRs. My intention is that once you start rotating the encoder, the axis motion mimics encoder movement at some preset ratio.
 
 
+# Support
+ETH/Polygon: `0x7c888B61286Ea00E01e2b6979A2265588f7dfDaA`
+TRX: `TFMuwm3zz5a5uDFUMei9tCUeUYCQNEuQTt`
 
 
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
