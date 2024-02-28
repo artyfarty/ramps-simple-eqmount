@@ -40,6 +40,10 @@ EncButtonT<RMT_ENCODER_PIN1_PIN, RMT_ENCODER_PIN2_PIN, RMT_ENCODER_BTN_PIN> rmt_
 
 float ra_speed = SIDEREAL_SPEED;
 
+#define FINE_MULT_DEFAULT 10
+short fine_multiplier;
+short coarse_multiplier;
+
 void setSpeed(double new_speed) {
   ra_speed = new_speed;
   
@@ -50,6 +54,13 @@ void setSpeed(double new_speed) {
   update_indicators = true;
 }
 
+void setShuttleSpeeds(short new_speed) {
+  fine_multiplier = new_speed;
+  coarse_multiplier = new_speed * 10;
+
+  update_indicators = true;
+}
+
 void shuttle(int32_t multipler, int8_t dir) {
   #ifdef USE_LCD
     lcd_indicator_icon = (dir > 0) ? INDICATOR_R : INDICATOR_L;
@@ -57,16 +68,16 @@ void shuttle(int32_t multipler, int8_t dir) {
 
   update_indicators = true;
 
-  ra_stepper.setTarget(ra_stepper.getTarget() + (ra_speed * dir * multipler));
+  ra_stepper.setTarget(ra_stepper.getCurrent() + (ra_speed * dir * multipler));
   setPeriod(ra_stepper.getPeriod());
 }
 
 void setup() {
   initTimer();
-  ra_stepper.setAcceleration(600);
   ra_stepper.setMaxSpeed(16000);
 
   setSpeed(SIDEREAL_SPEED);
+  setShuttleSpeeds(FINE_MULT_DEFAULT);
 
   main_encoder.setEncType(RA_ENCODER_TYPE);
 
@@ -88,27 +99,29 @@ ISR(TIMER1_COMPA_vect) {
 
 
 void loop() {
+  unsigned long currentMillis = millis();
+
   main_encoder.tick();
 
   if (main_encoder.turn()) {
     if (main_encoder.pressing()) {
       switch (main_encoder.getClicks()) {
         case 0:
-          shuttle(100, main_encoder.dir());
+          shuttle(coarse_multiplier, main_encoder.dir());
           break;
         case 1: 
+          setShuttleSpeeds(fine_multiplier + 1 * main_encoder.dir());
+          break;
+        case 2: 
           setSpeed(ra_speed + 0.01 * main_encoder.dir());
           break;
-        case 2:
-          setSpeed(ra_speed + 0.5 * main_encoder.dir());
-          break;
         case 3:
-          setSpeed(ra_speed + 5 * main_encoder.dir());
+          setSpeed(ra_speed + 1 * main_encoder.dir());
           break;
       }
 
     } else {
-      shuttle(10, main_encoder.dir());
+      shuttle(fine_multiplier, main_encoder.dir());
     }
   }
 
@@ -118,13 +131,13 @@ void loop() {
       if (rmt_encoder.pressing()) {
         switch (rmt_encoder.getClicks()) {
           case 0:
-            shuttle(10, rmt_encoder.dir());
+            shuttle(fine_multiplier, rmt_encoder.dir());
             break;
           case 1: 
-            shuttle(100, rmt_encoder.dir());
+            shuttle(coarse_multiplier, rmt_encoder.dir());
             break;
           case 2: 
-            shuttle(200, rmt_encoder.dir());
+            shuttle(coarse_multiplier * 3, rmt_encoder.dir());
             break;
         }
 
@@ -144,7 +157,6 @@ void loop() {
     setSpeed(ra_speed);
   }
 
-  unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     blinker = !blinker;
@@ -184,7 +196,12 @@ void loop() {
           u8g2.print(" > ");
           u8g2.print(ra_stepper.getTarget());
         }
-        
+
+        u8g2.setCursor(0, 60);
+        u8g2.print("Adj: ");
+        u8g2.print(fine_multiplier);
+
+        /*
         u8g2.setCursor(0, 60);
         u8g2.print("enc: ");
         u8g2.print(main_encoder.counter);
@@ -193,6 +210,7 @@ void loop() {
           u8g2.print(" rmt: ");
           u8g2.print(rmt_encoder.counter);
         #endif
+        */
 
         u8g2.sendBuffer();
       } while (u8g2.nextPage());

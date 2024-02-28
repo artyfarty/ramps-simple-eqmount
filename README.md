@@ -14,9 +14,10 @@ If you'll use the same mount and gear ratio that I use, you'll need to adjust yo
 
 ## Controls
 * Encoder rotate: slow R.A. adjustment
-* Encoder click and rotate: faster R.A. adjustment
-* Encoder 2 clicks and rotate: fine speed adjustment
-* Encoder 3 or more clicks and rotate: coarser speed adjustments
+* Encoder click and rotate: coarse R.A. adjustment
+* Encoder 2 clicks and rotate: change R.A. adjustment base speed
+* Encoder 3 clicks and rotate: fine speed adjustment
+* Encoder 4 clicks and rotate: coarse speed adjustments
 
 LCD is used to display debug info on current speed and positions.
 
