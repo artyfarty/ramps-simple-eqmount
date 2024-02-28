@@ -9,8 +9,8 @@ If you'll use the same mount and gear ratio that I use, you'll need to adjust yo
 
 ## Common hardware
 * NEMA17 stepper motor
-* 3D Printed motor mount and drive (coming soon on thingverse)
-* TMC2208 stepper driver or similar. Expensive driver is highly recommended. A4988 adds vibration, which is very noticable on 5mm eyepiece
+* [3D Printed motor mount and drive](https://www.thingiverse.com/thing:6508420)
+* TMC2208 stepper driver or similar. Expensive driver is highly recommended. A4988 will vibrate on low sidereal speed, which is very noticable on high magnification.
 
 ## Controls
 * Encoder rotate: slow R.A. adjustment
@@ -29,9 +29,9 @@ LCD is used to display debug info on current speed and positions.
 ## Zero soldering/wiring version
 Hardware:
 * Arduino Mega
-* RAMPS 1.4
-* RepRapDiscount Full Graphic Smart Controller
-* You may want to print a case for all those boards later.
+* [RAMPS 1.4](https://reprap.org/wiki/RAMPS_1.4)
+* [RepRapDiscount Full Graphic Smart Controller](https://reprap.org/wiki/RepRapDiscount_Full_Graphic_Smart_Controller)
+* You may want to print a case for all those boards later. For example [this bulky but very clever design](https://www.thingiverse.com/thing:3383359).
 
 Install RAMPS on Arduino.
 Install jupmers for 1/16 steps on E0 and plug your stepper driver into E0. Plug your NEMA17 motor into E0 motor output. Connect 12V to RAMPS low amp input. Do not exceed 12V, it is an upper limit of what Arduino can take.
