@@ -118,10 +118,13 @@ void loop() {
       if (rmt_encoder.pressing()) {
         switch (rmt_encoder.getClicks()) {
           case 0:
-            shuttle(50, rmt_encoder.dir());
+            shuttle(10, rmt_encoder.dir());
             break;
           case 1: 
             shuttle(100, rmt_encoder.dir());
+            break;
+          case 2: 
+            shuttle(200, rmt_encoder.dir());
             break;
         }
 
