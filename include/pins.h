@@ -17,3 +17,16 @@
 #define LCD_RST_PIN             U8X8_PIN_NONE
 
 #endif
+
+#ifdef PINOUT_NANO
+#include "pins_nano.h"
+
+#define RA_STEPPER_STEP_PIN     PIN_D9
+#define RA_STEPPER_DIR_PIN      PIN_D8
+#define RA_STEPPER_ENABLE_PIN   PIN_D7
+
+#define RA_ENCODER_PIN1_PIN     PIN_D6
+#define RA_ENCODER_PIN2_PIN     PIN_D5
+#define RA_ENCODER_BTN_PIN      PIN_D4
+
+#endif

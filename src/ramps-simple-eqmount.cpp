@@ -19,10 +19,18 @@ unsigned long previousMillis = 0;
 const long interval = 1000;
 
 #include <GyverStepper2.h>
+#define GS_NO_ACCEL
 GStepper2<STEPPER2WIRE> ra_stepper(200*16, RA_STEPPER_STEP_PIN, RA_STEPPER_DIR_PIN, RA_STEPPER_ENABLE_PIN);
 
+#define EB_NO_CALLBACK
+#define EB_DEB_TIME     50 
+#define EB_CLICK_TIME   500
+#define EB_HOLD_TIME    600
+#define EB_STEP_TIME    200
+#define EB_FAST_TIME    30
+
 #include <EncButton.h>
-EncButton eb(RA_ENCODER_PIN1_PIN, RA_ENCODER_PIN2_PIN, RA_ENCODER_BTN_PIN, RA_ENCODER_MODE, RA_ENCODER_BTN_MODE, RA_ENCODER_BTN_LEVEL);
+EncButtonT<RA_ENCODER_PIN1_PIN, RA_ENCODER_PIN2_PIN, RA_ENCODER_BTN_PIN> main_encoder(RA_ENCODER_MODE, RA_ENCODER_BTN_MODE, RA_ENCODER_BTN_LEVEL);
 
 #define SIDEREAL_SPEED 8.54218107
 
@@ -39,7 +47,10 @@ void setSpeed(double new_speed) {
 }
 
 void shuttle(int32_t multipler, int8_t dir) {
-  lcd_indicator_icon = (dir > 0) ? INDICATOR_R : INDICATOR_L;
+  #ifdef USE_LCD
+    lcd_indicator_icon = (dir > 0) ? INDICATOR_R : INDICATOR_L;
+  #endif
+
   update_indicators = true;
 
   ra_stepper.setTarget(ra_speed * dir * multipler, RELATIVE);
@@ -53,7 +64,7 @@ void setup() {
 
   setSpeed(SIDEREAL_SPEED);
 
-  eb.setEncType(RA_ENCODER_TYPE);
+  main_encoder.setEncType(RA_ENCODER_TYPE);
 
   #ifdef USE_LCD
     u8g2.begin();
@@ -69,33 +80,36 @@ ISR(TIMER1_COMPA_vect) {
 
 
 void loop() {
-  eb.tick();
+  main_encoder.tick();
 
-  if (eb.turn()) {
-    if (eb.pressing()) {
-      switch (eb.getClicks()) {
+  if (main_encoder.turn()) {
+    if (main_encoder.pressing()) {
+      switch (main_encoder.getClicks()) {
         case 0:
-          shuttle(100, eb.dir());
+          shuttle(100, main_encoder.dir());
           break;
         case 1: 
-          setSpeed(ra_speed + 0.01 * eb.dir());
+          setSpeed(ra_speed + 0.01 * main_encoder.dir());
           break;
         case 2:
-          setSpeed(ra_speed + 0.5 * eb.dir());
+          setSpeed(ra_speed + 0.5 * main_encoder.dir());
           break;
         case 3:
-          setSpeed(ra_speed + 5 * eb.dir());
+          setSpeed(ra_speed + 5 * main_encoder.dir());
           break;
       }
 
     } else {
-      shuttle(10, eb.dir());
+      shuttle(10, main_encoder.dir());
     }
   }
 
 
   if (ra_stepper.ready()) {
-    lcd_indicator_icon = 0;
+    #ifdef USE_LCD
+      lcd_indicator_icon = 0;
+    #endif
+
     update_indicators = true;
     setSpeed(ra_speed);
   }
