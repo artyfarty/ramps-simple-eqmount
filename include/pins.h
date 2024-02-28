@@ -14,8 +14,8 @@
 
 
 #ifdef USE_REMOTE
-    #define RMT_ENCODER_PIN1_PIN    AUX2_06
-    #define RMT_ENCODER_PIN2_PIN    AUX2_07
+    #define RMT_ENCODER_PIN1_PIN    AUX2_07
+    #define RMT_ENCODER_PIN2_PIN    AUX2_06
     #define RMT_ENCODER_BTN_PIN     AUX2_08
 #endif
 
