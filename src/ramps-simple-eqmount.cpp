@@ -3,6 +3,10 @@
 #include "hardware.h"
 #include "stepperTimer.h"
 
+#ifdef DEBUG
+#include <ArduinoLog.h>
+#endif
+
 #ifdef USE_LCD
   #include <U8g2lib.h>
   U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R0, LCD_CLOCK_PIN, LCD_DATA_PIN, LCD_CS_PIN);
@@ -30,8 +34,12 @@ GStepper2<STEPPER2WIRE> ra_stepper(200*16, RA_STEPPER_STEP_PIN, RA_STEPPER_DIR_P
 #define EB_STEP_TIME    200
 #define EB_FAST_TIME    30
 
+
 #include <EncButton.h>
+
+#ifdef USE_MAIN_ENCODER
 EncButtonT<RA_ENCODER_PIN1_PIN, RA_ENCODER_PIN2_PIN, RA_ENCODER_BTN_PIN> main_encoder(RA_ENCODER_MODE, RA_ENCODER_BTN_MODE, RA_ENCODER_BTN_LEVEL);
+#endif
 
 #ifdef USE_REMOTE
 EncButtonT<RMT_ENCODER_PIN1_PIN, RMT_ENCODER_PIN2_PIN, RMT_ENCODER_BTN_PIN> rmt_encoder(RMT_ENCODER_MODE, RMT_ENCODER_BTN_MODE, RMT_ENCODER_BTN_LEVEL);
@@ -52,19 +60,32 @@ float ra_speed = SIDEREAL_SPEED;
 short fine_multiplier;
 short coarse_multiplier;
 
+
 void startSidereal() {
+  #ifdef DEBUG
+    Log.traceln("Starting sidereal at %F ", ra_speed);
+  #endif
+
   ra_stepper.setSpeed(ra_speed);
   setPeriod(ra_stepper.getPeriod());
   startTimer();
 }
 
 void stopSidereal() {
+  #ifdef DEBUG
+    Log.traceln("Stopping sidereal");
+  #endif
+
   frmt_paused_since = currentMillis;
   ra_stepper.brake();
   stopTimer();
 }
 
 void setSpeed(double new_speed) {
+  #ifdef DEBUG
+    Log.traceln("New speed = %F ", ra_speed);
+  #endif
+
   ra_speed = new_speed;
 
   startSidereal();
@@ -76,11 +97,19 @@ void setShuttleSpeeds(short new_speed) {
   coarse_multiplier = new_speed * 10;
 
   update_indicators = true;
+
+  #ifdef DEBUG
+    Log.traceln("New shuttle speeds = %d/%d ", fine_multiplier, coarse_multiplier);
+  #endif
 }
 
 void shuttle(int32_t multipler, int8_t dir) {
   #ifdef USE_LCD
     lcd_indicator_icon = (dir > 0) ? INDICATOR_R : INDICATOR_L;
+  #endif
+
+  #ifdef DEBUG
+    Log.traceln("Shuttle order %d, dir: %d", multipler, dir);
   #endif
 
   update_indicators = true;
@@ -89,10 +118,14 @@ void shuttle(int32_t multipler, int8_t dir) {
   setPeriod(ra_stepper.getPeriod());
 }
 
+#ifdef USE_MAIN_ENCODER
 void handleMainEnc() {
   main_encoder.tick();
 
   if (main_encoder.turn()) {
+    #ifdef DEBUG
+      Log.traceln("Main encoder turn!");
+    #endif
     if (main_encoder.pressing()) {
       switch (main_encoder.getClicks()) {
         case 0:
@@ -114,11 +147,15 @@ void handleMainEnc() {
     }
   }
 }
+#endif
 
 #ifdef USE_REMOTE
 void handleRemoteEncoder() {
     rmt_encoder.tick();
     if (rmt_encoder.turn()) {
+      #ifdef DEBUG
+        Log.traceln("Remote encoder turn!");
+      #endif
       if (rmt_encoder.pressing()) {
         switch (rmt_encoder.getClicks()) {
           case 0:
@@ -140,15 +177,21 @@ void handleRemoteEncoder() {
 #endif
 
 #ifdef USE_FINE_REMOTE
-void handleRemoteEncoder() {
+void handleFineEncoder() {
     frmt_encoder.tick();
 
     if (frmt_encoder.turn()) {
+      #ifdef DEBUG
+        Log.traceln("Fine remote encoder turn!");
+      #endif
       stopSidereal();
       ra_stepper.dir = frmt_encoder.dir();
       ra_stepper.step();
     } else {
       if (ra_stepper.getStatus() == 0 && (frmt_paused_since + frmt_pause_length) < currentMillis ) {
+        #ifdef DEBUG
+          Log.traceln("Resuming sidereal after fine enc");
+        #endif
         startSidereal();
       }
     }
@@ -224,6 +267,15 @@ void encISR() {
 #endif
 
 void setup() {
+  #ifdef DEBUG
+    Serial.begin(9600);
+    delay(1000);
+    Serial.print("INIT LOGGER");
+
+    Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+    Log.traceln("Hello");
+  #endif
+
   currentMillis = millis();
   initTimer();
   ra_stepper.setMaxSpeed(16000);
@@ -231,11 +283,17 @@ void setup() {
   setSpeed(SIDEREAL_SPEED);
   setShuttleSpeeds(FINE_MULT_DEFAULT);
 
-  main_encoder.setEncType(RA_ENCODER_TYPE);
+  #ifdef USE_MAIN_ENCODER
+    main_encoder.setEncType(RA_ENCODER_TYPE);
+  #endif
 
   #ifdef USE_REMOTE
     rmt_encoder.setEncType(RMT_ENCODER_TYPE);
   #endif 
+
+  #ifdef USE_FINE_REMOTE
+    frmt_encoder.setEncType(FRMT_ENCODER_TYPE);
+  #endif
 
   #ifdef USE_LCD
     u8g2.begin();
@@ -254,7 +312,9 @@ void setup() {
     #endif
   #endif
 
-  Serial.begin(9600);
+  #ifdef DEBUG
+    Log.traceln("Setup finished");
+  #endif
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -266,15 +326,25 @@ ISR(TIMER1_COMPA_vect) {
 void loop() {
   currentMillis = millis();
 
-  handleMainEnc();
+  #ifdef USE_MAIN_ENCODER
+    handleMainEnc();
+  #endif
 
   #ifdef USE_REMOTE
     handleRemoteEncoder();
   #endif
 
+  #ifdef USE_FINE_REMOTE
+    handleFineEncoder();
+  #endif
+
   if (ra_stepper.ready()) {
     #ifdef USE_LCD
       lcd_indicator_icon = 0;
+    #endif
+
+    #ifdef DEBUG
+      Log.traceln("Resuming sidereal after shuttle");
     #endif
 
     update_indicators = true;
@@ -285,6 +355,7 @@ void loop() {
     previousMillis = currentMillis;
     blinker = !blinker;
     update_indicators = true;
+    Log.traceln("heartbeat");
   }
 
   #ifdef USE_LCD

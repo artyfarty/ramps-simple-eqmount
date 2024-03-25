@@ -38,9 +38,11 @@
 #define RA_STEPPER_DIR_PIN      PIN_D8
 #define RA_STEPPER_ENABLE_PIN   PIN_D7
 
-#define RA_ENCODER_PIN1_PIN     PIN_D6
-#define RA_ENCODER_PIN2_PIN     PIN_D5
-#define RA_ENCODER_BTN_PIN      PIN_D4
+#ifdef USE_MAIN_ENCODER
+    #define RA_ENCODER_PIN1_PIN     PIN_D6
+    #define RA_ENCODER_PIN2_PIN     PIN_D5
+    #define RA_ENCODER_BTN_PIN      PIN_D4
+#endif
 
 #ifdef USE_REMOTE
     #define RMT_ENCODER_PIN1_PIN    PIN_D3
