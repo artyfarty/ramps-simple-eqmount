@@ -75,8 +75,11 @@ void stopSidereal() {
   #ifdef DEBUG
     Log.traceln("Stopping sidereal");
   #endif
-
+  
+  #ifdef USE_FINE_REMOTE
   frmt_paused_since = currentMillis;
+  #endif
+
   ra_stepper.brake();
   stopTimer();
 }
@@ -279,6 +282,7 @@ void setup() {
   currentMillis = millis();
   initTimer();
   ra_stepper.setMaxSpeed(16000);
+  ra_stepper.enable();
 
   setSpeed(SIDEREAL_SPEED);
   setShuttleSpeeds(FINE_MULT_DEFAULT);
@@ -355,7 +359,9 @@ void loop() {
     previousMillis = currentMillis;
     blinker = !blinker;
     update_indicators = true;
+    #ifdef DEBUG
     Log.traceln("heartbeat");
+    #endif
   }
 
   #ifdef USE_LCD
