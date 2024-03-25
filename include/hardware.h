@@ -16,6 +16,13 @@
 
 #endif
 
+#ifdef USE_FINE_REMOTE
+
+#define FRMT_ENCODER_MODE         INPUT_PULLUP
+#define FRMT_ENCODER_TYPE         EB_STEP1
+
+#endif
+
 #ifdef PINOUT_NANO
 
 #define RA_ENCODER_MODE         INPUT

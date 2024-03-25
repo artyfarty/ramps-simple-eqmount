@@ -19,6 +19,11 @@
     #define RMT_ENCODER_BTN_PIN     AUX2_08
 #endif
 
+#ifdef USE_FINE_REMOTE
+    #define FRMT_ENCODER_PIN1_PIN    AUX2_07
+    #define FRMT_ENCODER_PIN2_PIN    AUX2_06
+#endif
+
 #define LCD_CLOCK_PIN           DOGLCD_SCK
 #define LCD_DATA_PIN            DOGLCD_MOSI
 #define LCD_CS_PIN              DOGLCD_CS
@@ -36,5 +41,21 @@
 #define RA_ENCODER_PIN1_PIN     PIN_D6
 #define RA_ENCODER_PIN2_PIN     PIN_D5
 #define RA_ENCODER_BTN_PIN      PIN_D4
+
+#ifdef USE_REMOTE
+    #define RMT_ENCODER_PIN1_PIN    PIN_D3
+    #define RMT_ENCODER_PIN2_PIN    PIN_D2
+    #define RMT_ENCODER_BTN_PIN     PIN_D1
+#endif
+
+#ifdef USE_FINE_REMOTE
+    #define FRMT_ENCODER_PIN1_PIN    PIN_D3
+    #define FRMT_ENCODER_PIN2_PIN    PIN_D2
+#endif
+
+#ifdef ENC_ISR
+    #define ENC_ISR_INT0    0
+    #define ENC_ISR_INT1    1
+#endif
 
 #endif

@@ -15,6 +15,7 @@
 
 bool update_indicators = true;
 bool blinker = false;
+unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 const long interval = 1000;
 
@@ -36,6 +37,13 @@ EncButtonT<RA_ENCODER_PIN1_PIN, RA_ENCODER_PIN2_PIN, RA_ENCODER_BTN_PIN> main_en
 EncButtonT<RMT_ENCODER_PIN1_PIN, RMT_ENCODER_PIN2_PIN, RMT_ENCODER_BTN_PIN> rmt_encoder(RMT_ENCODER_MODE, RMT_ENCODER_BTN_MODE, RMT_ENCODER_BTN_LEVEL);
 #endif
 
+#ifdef USE_FINE_REMOTE
+EncoderT<FRMT_ENCODER_PIN1_PIN, FRMT_ENCODER_PIN2_PIN> frmt_encoder(FRMT_ENCODER_MODE);
+
+unsigned long frmt_paused_since = 0;
+const long frmt_pause_length = 1000;
+#endif
+
 #include "sidereal_speed.h"
 
 float ra_speed = SIDEREAL_SPEED;
@@ -44,13 +52,22 @@ float ra_speed = SIDEREAL_SPEED;
 short fine_multiplier;
 short coarse_multiplier;
 
-void setSpeed(double new_speed) {
-  ra_speed = new_speed;
-  
+void startSidereal() {
   ra_stepper.setSpeed(ra_speed);
-
   setPeriod(ra_stepper.getPeriod());
   startTimer();
+}
+
+void stopSidereal() {
+  frmt_paused_since = currentMillis;
+  ra_stepper.brake();
+  stopTimer();
+}
+
+void setSpeed(double new_speed) {
+  ra_speed = new_speed;
+
+  startSidereal();
   update_indicators = true;
 }
 
@@ -72,35 +89,7 @@ void shuttle(int32_t multipler, int8_t dir) {
   setPeriod(ra_stepper.getPeriod());
 }
 
-void setup() {
-  initTimer();
-  ra_stepper.setMaxSpeed(16000);
-
-  setSpeed(SIDEREAL_SPEED);
-  setShuttleSpeeds(FINE_MULT_DEFAULT);
-
-  main_encoder.setEncType(RA_ENCODER_TYPE);
-
-  #ifdef USE_REMOTE
-    rmt_encoder.setEncType(RMT_ENCODER_TYPE);
-  #endif 
-
-  #ifdef USE_LCD
-    u8g2.begin();
-  #endif
-
-  Serial.begin(9600);
-}
-
-ISR(TIMER1_COMPA_vect) {
-  if (ra_stepper.tickManual()) setPeriod(ra_stepper.getPeriod());
-  else stopTimer();
-}
-
-
-void loop() {
-  unsigned long currentMillis = millis();
-
+void handleMainEnc() {
   main_encoder.tick();
 
   if (main_encoder.turn()) {
@@ -124,8 +113,10 @@ void loop() {
       shuttle(fine_multiplier, main_encoder.dir());
     }
   }
+}
 
-  #ifdef USE_REMOTE
+#ifdef USE_REMOTE
+void handleRemoteEncoder() {
     rmt_encoder.tick();
     if (rmt_encoder.turn()) {
       if (rmt_encoder.pressing()) {
@@ -145,25 +136,27 @@ void loop() {
         shuttle(10, rmt_encoder.dir());
       }
     }
-  #endif
+}
+#endif
 
+#ifdef USE_FINE_REMOTE
+void handleRemoteEncoder() {
+    frmt_encoder.tick();
 
-  if (ra_stepper.ready()) {
-    #ifdef USE_LCD
-      lcd_indicator_icon = 0;
-    #endif
+    if (frmt_encoder.turn()) {
+      stopSidereal();
+      ra_stepper.dir = frmt_encoder.dir();
+      ra_stepper.step();
+    } else {
+      if (ra_stepper.getStatus() == 0 && (frmt_paused_since + frmt_pause_length) < currentMillis ) {
+        startSidereal();
+      }
+    }
+}
+#endif
 
-    update_indicators = true;
-    setSpeed(ra_speed);
-  }
-
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    blinker = !blinker;
-    update_indicators = true;
-  }
-
-  #ifdef USE_LCD
+#ifdef USE_LCD
+void handleLCD() {
     if (update_indicators) {
       update_indicators = false;
 
@@ -215,5 +208,86 @@ void loop() {
         u8g2.sendBuffer();
       } while (u8g2.nextPage());
     }
+}
+#endif
+
+#ifdef ENC_ISR
+void encISR() {
+  #ifdef USE_REMOTE
+    rmt_encoder.tickISR();
+  #endif
+
+  #ifdef USE_FINE_REMOTE
+    frmt_encoder.tickISR();
+  #endif
+}
+#endif
+
+void setup() {
+  currentMillis = millis();
+  initTimer();
+  ra_stepper.setMaxSpeed(16000);
+
+  setSpeed(SIDEREAL_SPEED);
+  setShuttleSpeeds(FINE_MULT_DEFAULT);
+
+  main_encoder.setEncType(RA_ENCODER_TYPE);
+
+  #ifdef USE_REMOTE
+    rmt_encoder.setEncType(RMT_ENCODER_TYPE);
+  #endif 
+
+  #ifdef USE_LCD
+    u8g2.begin();
+  #endif
+
+  #ifdef ENC_ISR
+    attachInterrupt(ENC_ISR_INT0, encISR, CHANGE);
+    attachInterrupt(ENC_ISR_INT1, encISR, CHANGE);
+    
+    #ifdef USE_REMOTE
+      rmt_encoder.setEncISR(true);
+    #endif
+
+    #ifdef USE_FINE_REMOTE
+      frmt_encoder.setEncISR(true);
+    #endif
+  #endif
+
+  Serial.begin(9600);
+}
+
+ISR(TIMER1_COMPA_vect) {
+  if (ra_stepper.tickManual()) setPeriod(ra_stepper.getPeriod());
+  else stopTimer();
+}
+
+
+void loop() {
+  currentMillis = millis();
+
+  handleMainEnc();
+
+  #ifdef USE_REMOTE
+    handleRemoteEncoder();
+  #endif
+
+  if (ra_stepper.ready()) {
+    #ifdef USE_LCD
+      lcd_indicator_icon = 0;
+    #endif
+
+    update_indicators = true;
+    setSpeed(ra_speed);
+  }
+
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    blinker = !blinker;
+    update_indicators = true;
+  }
+
+  #ifdef USE_LCD
+    handleLCD();
   #endif
 }
