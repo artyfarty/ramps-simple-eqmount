@@ -56,7 +56,7 @@ const long frmt_pause_length = 1000;
 
 float ra_speed = SIDEREAL_SPEED;
 
-#define FINE_MULT_DEFAULT 10
+#define FINE_MULT_DEFAULT 15
 short fine_multiplier;
 short coarse_multiplier;
 
@@ -97,7 +97,7 @@ void setSpeed(double new_speed) {
 
 void setShuttleSpeeds(short new_speed) {
   fine_multiplier = new_speed;
-  coarse_multiplier = new_speed * 10;
+  coarse_multiplier = new_speed * 20;
 
   update_indicators = true;
 
