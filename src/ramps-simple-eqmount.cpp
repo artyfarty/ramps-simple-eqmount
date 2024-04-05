@@ -7,6 +7,10 @@
 #include <ArduinoLog.h>
 #endif
 
+#ifndef SHUTTLE_DIR
+#define SHUTTLE_DIR 1
+#endif
+
 #ifdef USE_LCD
   #include <U8g2lib.h>
   U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R0, LCD_CLOCK_PIN, LCD_DATA_PIN, LCD_CS_PIN);
@@ -66,6 +70,7 @@ void startSidereal() {
     Log.traceln("Starting sidereal at %F ", ra_speed);
   #endif
 
+  ra_stepper.dir = 1;
   ra_stepper.setSpeed(ra_speed);
   setPeriod(ra_stepper.getPeriod());
   startTimer();
@@ -188,7 +193,7 @@ void handleFineEncoder() {
         Log.traceln("Fine remote encoder turn!");
       #endif
       stopSidereal();
-      ra_stepper.dir = frmt_encoder.dir();
+      ra_stepper.dir = frmt_encoder.dir() * SHUTTLE_DIR;
       ra_stepper.step();
     } else {
       if (ra_stepper.getStatus() == 0 && (frmt_paused_since + frmt_pause_length) < currentMillis ) {
@@ -281,6 +286,11 @@ void setup() {
 
   currentMillis = millis();
   initTimer();
+
+  #ifdef INVERT_RA
+  ra_stepper.reverse(true);
+  #endif
+
   ra_stepper.setMaxSpeed(16000);
   ra_stepper.enable();
 
